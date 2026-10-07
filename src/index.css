@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Custom ultra-thin scrollbar styling for right side scrollbars */
+::-webkit-scrollbar {
+  width: 2px;
+  height: 2px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 105, 72, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 105, 72, 0.6);
+}
+
+/* Firefox thin scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 105, 72, 0.3) transparent;
+}
+
+/* Scoped utility for elements that explicitly request no scrollbar */
+.scrollbar-hide::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+.scrollbar-hide,
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+@theme {
+  --font-sans: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Hanken Grotesk", sans-serif;
+
+  --color-primary: #006948;
+  --color-primary-container: #00855d;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #f5fff7;
+  
+  --color-secondary: #006c49;
+  --color-secondary-container: #6cf8bb;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #00714d;
+  
+  --color-tertiary: #3f6353;
+  --color-tertiary-container: #577c6b;
+  --color-on-tertiary: #ffffff;
+  
+  --color-surface: #faf8ff;
+  --color-surface-dim: #d2d9f4;
+  --color-surface-container: #eaedff;
+  --color-surface-container-low: #f2f3ff;
+  --color-surface-container-high: #e2e7ff;
+  
+  --color-on-surface: #131b2e;
+  --color-on-surface-variant: #3d4a42;
+  --color-outline: #6d7a72;
+  --color-outline-variant: #bccac0;
+  
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/40 backdrop-blur-2xl border border-white/40;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .emerald-glow {
+    box-shadow: 0 4px 20px rgba(5, 150, 105, 0.08);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @keyframes glass-shimmer {
+    0% { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
+    20% { opacity: 0.5; }
+    50% { opacity: 0; transform: translateX(100%) skewX(-15deg); }
+    100% { opacity: 0; transform: translateX(100%) skewX(-15deg); }
+  }
+
+  .glass-animate {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glass-animate::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: glass-shimmer 5s infinite linear;
+    pointer-events: none;
+  }
+}
+
+body {
+  @apply bg-[#faf8ff] text-[#131b2e] font-sans;
+  touch-action: manipulation;
+}

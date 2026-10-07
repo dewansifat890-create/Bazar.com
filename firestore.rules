@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 1. Products Collection (Admin & Store Listings)
+    // Anyone can read products to view items in the shop.
+    // Authenticated users/admins can add, edit or remove products.
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isSignedIn();
+    }
+
+    // 2. Orders Collection
+    // Customers can create orders, and read their own orders.
+    // Store managers/admins can view and update order status.
+    match /orders/{orderId} {
+      allow create: if true; // Allows guest checkout as well as authenticated checkout
+      allow read: if isSignedIn() || resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn();
+    }
+
+    // 3. User Profiles Collection
+    // Users can read and update their own profile document.
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update, delete: if isOwner(userId);
+      
+      // Nested private information
+      match /private/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // 4. Product Reviews Collection
+    // Anyone can read verified buyer reviews.
+    // Authenticated customers can submit a review.
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
+    }
+
+    // 5. Store / Admin Settings Collection
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // Default Fallback: Deny all unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

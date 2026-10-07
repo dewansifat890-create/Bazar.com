@@ -1,0 +1,46 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isImageFile() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isValidSize() {
+      return request.resource.size <= 10 * 1024 * 1024; // 10MB limit
+    }
+
+    // 1. Product Images uploaded via Admin / Seller Center
+    // Anyone can view product images.
+    // Authenticated users/admins can upload images up to 10MB.
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn() && isImageFile() && isValidSize();
+    }
+
+    // 2. User Avatars
+    // Anyone can view avatars.
+    // Users can upload their own profile avatar up to 5MB.
+    match /avatars/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn() && request.auth.uid == userId && isImageFile() && request.resource.size <= 5 * 1024 * 1024;
+    }
+
+    // 3. General Store Uploads (banners, logos, attachments)
+    match /uploads/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn() && isImageFile() && isValidSize();
+    }
+
+    // Default Fallback
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+  }
+}

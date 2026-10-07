@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover, interactive-widget=overlays-content" />
+    <title>Bazar - Premium Global Shopping</title>
+    <meta name="description" content="A premium emerald-themed e-commerce experience with glassmorphic UI." />
+    <meta property="og:title" content="Bazar - Premium Global Shopping" />
+    <meta property="og:description" content="A premium emerald-themed e-commerce experience with glassmorphic UI." />
+    <script>
+      (function() {
+        try {
+          var rawFetch = window.fetch;
+          var customFetch = null;
+          Object.defineProperty(window, 'fetch', {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return customFetch || rawFetch;
+            },
+            set: function(val) {
+              customFetch = val;
+              console.log("bazar-safeguard: custom fetch registered");
+            }
+          });
+        } catch(e) {
+          console.warn("bazar-safeguard: failed to define fetch proxy:", e);
+        }
+      })();
+
+      // Prevent pinch-zooming (multi-touch) globally
+      document.addEventListener('touchstart', function(e) {
+        if (e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // Prevent double-tap zooming globally
+      var lastTouchEnd = 0;
+      document.addEventListener('touchend', function(e) {
+        var now = Date.now();
+        if (now - lastTouchEnd <= 250) {
+          // Check if target is an input/textarea so we don't block normal focus
+          var tag = e.target.tagName ? e.target.tagName.toLowerCase() : '';
+          if (tag !== 'input' && tag !== 'textarea') {
+            e.preventDefault();
+          }
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
+
+      // Prevent mouse wheel / trackpad pinch zooming
+      document.addEventListener('wheel', function(e) {
+        if (e.ctrlKey) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // Prevent iOS Safari gesture-zoom
+      document.addEventListener('gesturestart', function(e) {
+        e.preventDefault();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
