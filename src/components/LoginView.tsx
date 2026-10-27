@@ -47,7 +47,10 @@ export default function LoginView({ onClose }: { onClose?: () => void }) {
     setErrorInfo(null);
     setGoogleLoading(true);
     try {
-      const { user, error } = await loginWithGoogle();
+      const { user, error, redirected } = (await loginWithGoogle()) as any;
+      if (redirected) {
+        return;
+      }
       if (error) {
         setErrorInfo(error);
         if (error.isDomainError || error.isProviderError) {

@@ -121,11 +121,52 @@ export function getFirebaseFriendlyError(error: any): AuthErrorInfo {
   }
 }
 
-// Pure Google Sign In
+// Helper to detect mobile devices or in-app webviews where popups are blocked
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined' || !window.navigator) return false;
+  const ua = window.navigator.userAgent || window.navigator.vendor || (window as any).opera || '';
+  return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+}
+
+// Pure Google Sign In with mobile popup blocker protection & redirect fallback
 export async function loginWithGoogle() {
+  const isMobile = isMobileDevice();
+
+  // On mobile browsers, popups are frequently blocked or crash in standalone tabs.
+  // We first attempt signInWithPopup, but if blocked or on mobile error, we seamlessly switch to signInWithRedirect.
   try {
     const result = await signInWithPopup(auth, googleProvider);
     return { user: result.user, error: null };
+  } catch (error: any) {
+    const code = error?.code || '';
+    // If popup was blocked or in mobile context, attempt redirect flow
+    if (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/cancelled-popup-request' ||
+      (isMobile && code === 'auth/popup-closed-by-user')
+    ) {
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return { user: null, error: null, redirected: true };
+      } catch (redirectErr: any) {
+        const friendly = getFirebaseFriendlyError(redirectErr);
+        return { user: null, error: friendly };
+      }
+    }
+
+    const friendly = getFirebaseFriendlyError(error);
+    return { user: null, error: friendly };
+  }
+}
+
+// Check redirect login results when user returns to app
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
+    if (result && result.user) {
+      return { user: result.user, error: null };
+    }
+    return { user: null, error: null };
   } catch (error: any) {
     const friendly = getFirebaseFriendlyError(error);
     return { user: null, error: friendly };
@@ -409,73 +450,83 @@ export function extractBannersFromData(data: any): any[] {
     .filter((b): b is NonNullable<typeof b> => Boolean(b && b.active && b.image));
 }
 
-// Fetch Hero Banners from Firebase Realtime Database & Firestore
+// Fetch Hero Banners from Firebase Realtime Database & Firestore with local cache & timeout
 export async function fetchBannersFromFirebase(): Promise<any[]> {
-  const bannerPaths = ['banners', 'heroBanners', 'hero_banners', 'carousel', 'sliders', 'slider'];
-
-  // 1. Try Realtime Database paths
-  for (const path of bannerPaths) {
-    try {
-      const snap = await rtdbGet(rtdbRef(rtdb, path));
-      if (snap.exists()) {
-        const list = extractBannersFromData(snap.val());
-        if (list.length > 0) return list;
-      }
-    } catch {
-      // continue trying next path
-    }
-  }
-
-  // 2. Try root scan in Realtime Database
+  // Check fast local cache first for instant render
   try {
-    const rootSnap = await rtdbGet(rtdbRef(rtdb, '/'));
-    if (rootSnap.exists()) {
-      const list = extractBannersFromData(rootSnap.val());
-      if (list.length > 0) return list;
+    const cached = localStorage.getItem('bazar_cached_hero_banners');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Return cached banners immediately while background re-validates
+        setTimeout(() => {
+          fetchBannersFromFirebaseDirect().catch(() => {});
+        }, 100);
+        return parsed;
+      }
     }
-  } catch {
-    // ignore
-  }
+  } catch {}
 
-  // 3. Try REST API fallback on RTDB
-  for (const path of [...bannerPaths, '']) {
+  return fetchBannersFromFirebaseDirect();
+}
+
+async function fetchBannersFromFirebaseDirect(): Promise<any[]> {
+  // Direct fetch with 1.8s timeout so website never freezes or blocks
+  const fetchWithTimeout = async () => {
+    // 1. Try common RTDB paths directly
+    for (const path of ['banners', 'heroBanners', 'carousel', 'sliders']) {
+      try {
+        const snap = await rtdbGet(rtdbRef(rtdb, path));
+        if (snap.exists()) {
+          const list = extractBannersFromData(snap.val());
+          if (list.length > 0) return list;
+        }
+      } catch {}
+    }
+
+    // 2. Try REST API fast fetch
     try {
-      const url = path
-        ? `https://bazar-com-2f14f-default-rtdb.firebaseio.com/${path}.json`
-        : `https://bazar-com-2f14f-default-rtdb.firebaseio.com/.json`;
-      const res = await fetch(url);
+      const res = await fetch('https://bazar-com-2f14f-default-rtdb.firebaseio.com/banners.json');
       if (res.ok) {
         const restData = await res.json();
         const list = extractBannersFromData(restData);
         if (list.length > 0) return list;
       }
-    } catch {
-      // ignore
-    }
-  }
+    } catch {}
 
-  // 4. Try Firestore collections ('banners', 'heroBanners', 'carousel', 'sliders')
-  for (const colName of ['banners', 'heroBanners', 'carousel', 'sliders']) {
+    // 3. Try Firestore 'banners' collection
     try {
-      const snap = await getDocs(collection(db, colName));
+      const snap = await getDocs(collection(db, 'banners'));
       if (!snap.empty) {
         const docs: any[] = [];
         snap.forEach((d) => docs.push({ id: d.id, ...d.data() }));
         const list = extractBannersFromData(docs);
         if (list.length > 0) return list;
       }
-    } catch {
-      // ignore
-    }
-  }
+    } catch {}
 
-  return [];
+    return [];
+  };
+
+  try {
+    const timeoutPromise = new Promise<any[]>((resolve) => setTimeout(() => resolve([]), 2000));
+    const result = await Promise.race([fetchWithTimeout(), timeoutPromise]);
+    if (Array.isArray(result) && result.length > 0) {
+      try {
+        localStorage.setItem('bazar_cached_hero_banners', JSON.stringify(result));
+      } catch {}
+      return result;
+    }
+    return [];
+  } catch {
+    return [];
+  }
 }
 
-// Real-time listener for Hero Banners across common RTDB paths and root
+// Real-time listener for Hero Banners
 export function subscribeToBannersRealtime(callback: (banners: any[]) => void) {
   const unsubscribes: Array<() => void> = [];
-  const paths = ['banners', 'heroBanners', 'hero_banners', 'carousel', 'sliders', '/'];
+  const paths = ['banners', 'heroBanners', 'carousel'];
 
   paths.forEach((path) => {
     try {
@@ -485,20 +536,18 @@ export function subscribeToBannersRealtime(callback: (banners: any[]) => void) {
         (snapshot) => {
           if (snapshot.exists()) {
             const list = extractBannersFromData(snapshot.val());
-            if (list.length > 0 || path === 'banners' || path === 'heroBanners') {
+            if (list.length > 0) {
+              try {
+                localStorage.setItem('bazar_cached_hero_banners', JSON.stringify(list));
+              } catch {}
               callback(list);
             }
-          } else if (path === 'banners' || path === 'heroBanners') {
-            // If deleted in admin, trigger re-fetch to check if any other path has banners
-            fetchBannersFromFirebase().then((fresh) => callback(fresh)).catch(() => {});
           }
         },
         () => {}
       );
       unsubscribes.push(unsub);
-    } catch {
-      // ignore
-    }
+    } catch {}
   });
 
   return () => {

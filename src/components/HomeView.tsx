@@ -142,7 +142,14 @@ export default function HomeView({
     }
   }, [refreshKey]);
 
-  const [heroBanners, setHeroBanners] = React.useState(() => {
+  const [heroBanners, setHeroBanners] = React.useState<any[]>(() => {
+    try {
+      const cached = localStorage.getItem('bazar_cached_hero_banners');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
     const admin = getRoyalClubAdminSettings();
     const active = (admin.heroBanners || []).filter(b => b.active);
     return active.length > 0 ? active : DEFAULT_HERO_BANNERS;

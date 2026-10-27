@@ -14,7 +14,7 @@ import SearchView from './components/SearchView';
 import AuthModal from './components/AuthModal';
 import { getMergedProducts } from './utils/sellerProducts';
 import { usePreferences, saveLoginState } from './utils/preferences';
-import { onAuthUserChanged } from './firebase';
+import { onAuthUserChanged, handleRedirectResult } from './firebase';
 import { getOrGenerateUserId } from './utils/orders';
 
 export default function App() {
@@ -78,8 +78,13 @@ export default function App() {
     }
   });
 
-  // Listen to live Firebase Auth state changes
+  // Listen to live Firebase Auth state changes & redirect sign-in resolution
   useEffect(() => {
+    // Check if the user just returned from a Google sign-in redirect on mobile
+    handleRedirectResult().catch((err) => {
+      console.warn('Redirect auth result warning:', err);
+    });
+
     const unsubscribe = onAuthUserChanged((user) => {
       if (user) {
         let resolvedName = user.displayName;
@@ -116,16 +121,15 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // First visit popup prompt as requested by user
+  // First-ever visit login popup prompt (shows once only on very first visit, never again on subsequent reloads)
   useEffect(() => {
     try {
-      const hasPrompted = sessionStorage.getItem('bazar_welcome_login_prompted');
-      if (!hasPrompted && !authState.loggedIn) {
-        // Open the login popup modal with cross icon and google login
+      const hasShownEver = localStorage.getItem('bazar_first_visit_login_shown');
+      if (!hasShownEver && !authState.loggedIn) {
+        localStorage.setItem('bazar_first_visit_login_shown', 'true');
         const timer = setTimeout(() => {
           setIsAuthModalOpen(true);
-          sessionStorage.setItem('bazar_welcome_login_prompted', 'true');
-        }, 350);
+        }, 400);
         return () => clearTimeout(timer);
       }
     } catch (e) {

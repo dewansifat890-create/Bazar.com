@@ -76,7 +76,12 @@ export default function AuthModal({
     setErrorInfo(null);
     setGoogleLoading(true);
     try {
-      const { user, error } = await loginWithGoogle();
+      const { user, error, redirected } = (await loginWithGoogle()) as any;
+      if (redirected) {
+        // Redirecting to Google account page on mobile
+        setSuccessMsg('Google লগইন পেজে নিয়ে যাওয়া হচ্ছে...');
+        return;
+      }
       if (error) {
         setErrorInfo(error);
         if (error.isDomainError || error.isProviderError) {
