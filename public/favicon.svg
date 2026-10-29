@@ -1,0 +1,21 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' width='512' height='512'>
+  <defs>
+    <linearGradient id='bgGrad' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='#059669'/>
+      <stop offset='100%' stop-color='#047857'/>
+    </linearGradient>
+  </defs>
+  <rect width='512' height='512' rx='128' fill='url(#bgGrad)'/>
+  <g fill='none' stroke='#ffffff' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'>
+    <!-- Basket handles -->
+    <path d='M176 200 L236 96 C244 82 268 82 276 96 L336 200' stroke-width='28'/>
+    <!-- Basket rim and body -->
+    <path d='M80 200 L432 200 L392 416 C388 436 370 448 350 448 L162 448 C142 448 124 436 120 416 Z' fill='rgba(255,255,255,0.08)' stroke-width='32'/>
+    <!-- Basket vertical weaves -->
+    <line x1='190' y1='200' x2='206' y2='448' stroke-width='24'/>
+    <line x1='256' y1='200' x2='256' y2='448' stroke-width='24'/>
+    <line x1='322' y1='200' x2='306' y2='448' stroke-width='24'/>
+    <!-- Basket horizontal weave -->
+    <line x1='96' y1='320' x2='416' y2='320' stroke-width='24'/>
+  </g>
+</svg>
