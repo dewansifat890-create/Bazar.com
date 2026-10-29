@@ -106,8 +106,8 @@ export default function Layout({
         <div className={`fixed top-4 w-full max-w-2xl z-50 px-5 transition-all duration-300 transform ${visible ? 'translate-y-0 opacity-100' : '-translate-y-24 opacity-0 pointer-events-none'}`}>
           <header className="glass-card h-16 rounded-2xl flex items-center justify-between px-5 shadow-lg shadow-black/5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                <Icons.ShoppingBasket size={24} />
+              <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-primary/20 shrink-0 border border-primary/30">
+                <img src="/logo.png" alt="Bazar.com Logo" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="text-xl font-black leading-none tracking-tighter text-primary">BAZAR.COM</h1>
