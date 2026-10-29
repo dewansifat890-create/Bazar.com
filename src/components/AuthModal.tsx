@@ -211,6 +211,24 @@ export default function AuthModal({
                 <Icons.AlertCircle size={18} className="text-red-400 shrink-0 mt-0.5" />
                 <span className="font-semibold leading-relaxed">{errorInfo.message}</span>
               </div>
+
+              {errorInfo.isDomainError && (
+                <div className="pt-2 border-t border-red-500/20 space-y-2">
+                  <p className="text-[11px] text-amber-300 font-bold">
+                    যে ডোমেইনটি অথরাইজ করতে হবে:
+                  </p>
+                  <div className="flex items-center gap-2 bg-black/40 p-2 rounded-xl border border-white/10 font-mono text-[11px] text-emerald-300">
+                    <span className="truncate flex-1 select-all">{currentDomain || window.location.hostname}</span>
+                    <button
+                      type="button"
+                      onClick={handleCopyDomain}
+                      className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black rounded-lg text-[10px] cursor-pointer shrink-0 transition-all active:scale-95"
+                    >
+                      {copied ? 'কপি হয়েছে ✓' : 'কপি করুন'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

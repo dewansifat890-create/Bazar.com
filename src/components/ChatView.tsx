@@ -4,9 +4,10 @@ import { motion } from 'motion/react';
 
 // Contact Links Config
 const CONTACT_LINKS = {
-  whatsapp: 'https://wa.me/8801723456789',
+  whatsapp: 'https://wa.me/8801854985252',
   messenger: 'https://m.me/dewansifat890',
-  sms: 'sms:+8801723456789?body=Assalamu%20Alaikum!%20I%20want%20to%20know%20more%20about%20your%20products.'
+  call: 'tel:+8801854985252',
+  sms: 'sms:+8801854985252?body=Assalamu%20Alaikum!%20I%20want%20to%20know%20more%20about%20your%20products.'
 };
 
 export default function ChatView() {

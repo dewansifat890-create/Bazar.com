@@ -83,7 +83,7 @@ export function getFirebaseFriendlyError(error: any): AuthErrorInfo {
     case 'auth/unauthorized-domain':
       return {
         code,
-        message: 'লগইন সার্ভিস বর্তমানে এই ডোমেইনে অনুমোদিত নয়। অনুগ্রহ করে কিছুক্ষণ পর চেষ্টা করুন।',
+        message: `লগইন সার্ভিস বর্তমানে এই ডোমেইনে (${currentDomain}) অনুমোদিত নয়। Firebase Console > Authentication > Settings > Authorized Domains-এ ডোমেইনটি যোগ করতে হবে।`,
         isDomainError: true,
         currentDomain
       };
